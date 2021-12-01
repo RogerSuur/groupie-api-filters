@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Groupie tracker</title>
+    <link rel="stylesheet" href="css/styletest.css">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
+ </head>
+ <header>
+    <div class="topnav">
+ 
+        <a href="/">Artists</a>
+        <a href="/search">Search</a>
+       </div>
+  <details class="p2">
+    <summary>Credits</summary>
+    <ul>JollyRoger Alo Rhynes</ul>
+   </details>
+   <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+   <form method="post" action="/query" target="iframe_a">
+    <label for="bands">Search for a band:
+   
+    <input list="artists" id="bandsInput" name="mybands" type="text" autocomplete="off"/>
+    <datalist id="artists">{{range .ArtistData }}
+        <option value= "{{.Name}} - Band">
+            {{range .Members}}
+        <option value= "{{.}} - Members">
+            {{end}}
+        <option value= "{{.FirstAlbum }} - First album">
+        <option value= "{{.CreationDate }} - Creation date">
+            {{end}}
+            {{range $key, $value := .Map}}
+        <option value= "{{$key}} - Locations">
+            {{end}}
+        </datalist>
+    </label>
+        <script>    var initialArray = [];
+            initialArray = $('#artists option');
+            $("#bandsInput").keyup(function() {
+                var inputVal = $('#bandsInput').val();
+                var first =  [];
+                first = $('#artists option');
+                if (inputVal != '' && inputVal!= 'undefined') {
+                    var options = '';
+                    for (var i = 0; i < first.length; i++) {
+                        if (first[i].value.toLowerCase().startsWith(inputVal.toLowerCase())) {
+                            options += '<option value="' + first[i].value + '" />';
+                        }
+                    }
+                    var filter = [];
+                    var filter = $('#artists option data-value')
+                   /* if (options = '') {
+                        for (var i = 0; i < first.length; i++) {
+                        
+                         if (first[i].value.toLowerCase().include(inputVal.toLowerCase())) {
+                            options += '<option value="' + first[i].value + '" />';
+                        }
+                    }
+                    } */
+                    document.getElementById('artists').innerHTML = options;
+                }
+                else
+                {
+                    var options = '';
+                    for (var i = 0; i < initialArray.length; i++) {
+                        options += '<option value="' + initialArray[i].value + '" />';
+                    }
+                    document.getElementById('artists').innerHTML = options;
+                }
+            });</script>
+         <input type="submit">
+        </form>
+       
+</header>
+
+<body>
+    <iframe name="iframe_a" p id="p2" height="460px" width="100%" title="Iframe"></iframe>
+</body>
+</html>
