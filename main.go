@@ -14,9 +14,11 @@ import (
 
 func main() {
 	http.Handle("/css/", http.StripPrefix("/css/", http.FileServer(http.Dir("./assets")))) //	http.HandleFunc("/concerts", concerts) // handler for result site
-	http.HandleFunc("/", handler)                                                          // handler for main page on site
-	http.HandleFunc("/query", query)                                                       // handler for query results
-	http.HandleFunc("/search", search)                                                     // handler for search bar
+	http.HandleFunc("/", handler)
+	http.HandleFunc("/members", membersfunc)
+	http.HandleFunc("/filter", filterfunc) // handler for main page on site
+	http.HandleFunc("/query", query)       // handler for query results
+	http.HandleFunc("/search", search)     // handler for search bar
 	fmt.Println("Starting server at localhost:8000")
 	http.ListenAndServe(":8000", nil) // start web server on port 8000
 }
@@ -37,6 +39,78 @@ func handler(w http.ResponseWriter, r *http.Request) { // creates main site usin
 	if err != nil {
 		http.Error(w, "500 Internal server error", http.StatusInternalServerError)
 		return
+	}
+}
+
+func filterfunc(w http.ResponseWriter, r *http.Request) {
+	templ, err := template.ParseFiles("assets/query.html") // function to show html template on page
+	if err != nil {
+		http.Error(w, "500 Internal Server ERROR", http.StatusInternalServerError)
+		return
+	}
+	if r.URL.Path != "/filter" {
+		http.Error(w, "404 address NOT FOUND", http.StatusNotFound)
+		return
+	}
+	getData(w, r)
+	r.ParseForm()
+	var oneartistData []allBands
+
+	slidercDates := r.FormValue("cDatename")
+	var cDates []string = strings.Split(slidercDates, " - ")
+	cDatesintlow, _ := strconv.Atoi(cDates[0])
+	cDatesinthigh, _ := strconv.Atoi(cDates[1])
+
+	sliderfAlbum := r.FormValue("fAlbumname")
+	var fAlbum []string = strings.Split(sliderfAlbum, " - ")
+	fAlbumintlow, _ := strconv.Atoi(fAlbum[0])
+	fAlbuminthigh, _ := strconv.Atoi(fAlbum[1])
+
+	for k := range artistData {
+		for i := fAlbumintlow; i <= fAlbuminthigh; i++ {
+
+			fAlbumonlyyearstring := strconv.Itoa(i)
+			fAlbumonlyyear := strings.Split(artistData[k].FirstAlbum, "-")
+			if fAlbumonlyyearstring == fAlbumonlyyear[2] {
+				oneartistData = append(oneartistData, artistData[k])
+			}
+		}
+
+		for i := cDatesintlow; i <= cDatesinthigh; i++ {
+			if artistData[k].CreationDate == i {
+				oneartistData = append(oneartistData, artistData[k])
+			}
+		}
+	}
+
+	err = templ.ExecuteTemplate(w, "query.html", oneartistData)
+	if err != nil {
+		http.Error(w, "500 Internal server error", http.StatusInternalServerError)
+		return
+	}
+}
+
+func membersfunc(w http.ResponseWriter, r *http.Request) {
+	templ, err := template.ParseFiles("assets/query.html") // function to show html template on page
+	if err != nil {
+		http.Error(w, "500 Internal Server ERROR", http.StatusInternalServerError)
+		return
+	}
+	r.ParseForm()
+	var oneartistData []allBands
+	// r.ParseForm()vajalik formvalue jaoks, käib formi läbi
+	members := r.Form["m1"]
+	if len(members) > 0 {
+		for i := range artistData {
+			for j := range members {
+				if strconv.Itoa(len(artistData[i].Members)) == members[j] {
+					oneartistData = append(oneartistData, artistData[i])
+				}
+			}
+		}
+		templ.ExecuteTemplate(w, "query.html", oneartistData)
+	} else {
+		templ.ExecuteTemplate(w, "search.html", finaldata)
 	}
 }
 
@@ -216,9 +290,9 @@ type relationIndex struct {
 }
 
 var (
-	artistData    []allBands
-	oneartistData []allBands
-	relationData  []struct {
+	artistData []allBands
+
+	relationData []struct {
 		Id             int
 		DatesLocations map[string][]string
 	}
@@ -227,8 +301,9 @@ var (
 var UptDatesLocations map[string][]int
 
 type manybands struct {
-	Map        map[string][]int
-	ArtistData []allBands
+	CreationDateMap map[int][]int
+	Map             map[string][]int
+	ArtistData      []allBands
 }
 
 var finaldata manybands

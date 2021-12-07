@@ -5,6 +5,9 @@
     <title>Groupie tracker</title>
     <link rel="stylesheet" href="css/styletest.css">
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.js"></script>
+  <script src="https://code.jquery.com/ui/1.13.0/jquery-ui.js"></script>
+  <link rel="stylesheet" href="//code.jquery.com/ui/1.13.0/themes/base/jquery-ui.css">
 </head>
 
 <header>
@@ -18,8 +21,91 @@
     <summary>Credits</summary>
     <ul>JollyRoger Alo Rhynes</ul>
    </details>
-   
+   <form method="post" action="/filter" target="iframe_a">
+   <button type="submit">Filter</button>
+       <script>
+        $( function() {
+          $( "#cDate-Range" ).slider({
+            range: true,
+            min: 1900,
+            max: 2021,
+            values: [ 1900, 2021 ],
+            slide: function( event, ui ) {
+              $( "#cDate" ).val(ui.values[ 0 ] + " - " + ui.values[ 1 ] );
+            }
+          });
+          $( "#cDate" ).val($( "#cDate-Range" ).slider( "values", 0 ) + " - "
+            + $( "#cDate-Range" ).slider( "values", 1 ) );
+        } );
+        </script>
+
+<script>
+    $( function() {
+      $( "#fAlbum-range" ).slider({
+        range: true,
+        min: 1900,
+        max: 2021,
+        values: [ 1900, 2021 ],
+        slide: function( event, ui ) {
+          $( "#fAlbum" ).val(ui.values[ 0 ] + " - " + ui.values[ 1 ] );
+        }
+      });
+      $( "#fAlbum" ).val($( "#fAlbum-range" ).slider( "values", 0 ) + " - "
+        + $( "#fAlbum-range" ).slider( "values", 1 ) );
+    } );
+    </script>
+
+<p>
+    <label for="cDate">Creation Date:</label>
+    <input type="text" id="cDate" name="cDatename" readonly style="border:0; color:black; font-weight:bold;">
+  </p>
+  <div id="cDate-Range"></div>
+
+  <p>
+    <label for="fAlbum">First Album:</label>
+    <input type="text" id="fAlbum" name="fAlbumname" readonly style="border:0; color:black; font-weight:bold;">
+  </p>
+  <div id="fAlbum-range"></div>
+  </form>
+
+  <form style="display: inline-block;" action="/members" >Members:
+    <button type="submit">Members</button>
+    <input type="checkbox" id="m1" name="m1" value="1">
+    <label for="m1"> 1</label>
+    <input type="checkbox" id="m2" name="m1" value="2">
+    <label for="m1"> 2</label>
+    <input type="checkbox" id="m3" name="m1" value="3">
+    <label for="m1"> 3</label>
+    <input type="checkbox" id="m4" name="m1" value="4">
+    <label for="m1"> 4</label>
+    <input type="checkbox" id="m5" name="m1" value="5">
+    <label for="m1"> 5</label>
+    <input type="checkbox" id="m6" name="m1" value="6">
+    <label for="m1"> 6</label>
+    <input type="checkbox" id="m7" name="m1" value="7">
+    <label for="m1"> 7</label>
+    <input type="checkbox" id="m8" name="m1" value="8">
+    <label for="m1"> 8</label>
+  </form>
+
+  <!--<div class="dropdown">
+    <button class="dropbtn">Locations</button>
+    <div class="dropdown-content">
+        {{range .ArtistData }}
+    <a href="#">{{range $key, $value := .DatesLocations}}
+        {{$key}}:
+        {{ range $value}}
+        {{.}}
+        {{end}}
+        {{end}}
+        {{end}}
+    </a>
+    </div>
+  </div>-->
+
   </header>
+
+
 <body>
   <div class="container-fluid">
   <div class="row">
