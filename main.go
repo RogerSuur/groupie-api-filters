@@ -67,17 +67,10 @@ func filterfunc(w http.ResponseWriter, r *http.Request) {
 	fAlbuminthigh, _ := strconv.Atoi(fAlbum[1])
 
 	for k := range artistData {
-		for i := fAlbumintlow; i <= fAlbuminthigh; i++ {
-
-			fAlbumonlyyearstring := strconv.Itoa(i)
-			fAlbumonlyyear := strings.Split(artistData[k].FirstAlbum, "-")
-			if fAlbumonlyyearstring == fAlbumonlyyear[2] {
-				oneartistData = append(oneartistData, artistData[k])
-			}
-		}
-
-		for i := cDatesintlow; i <= cDatesinthigh; i++ {
-			if artistData[k].CreationDate == i {
+		fAlbumonlyyear := strings.Split(artistData[k].FirstAlbum, "-")
+		fAlbumintonlyyear, _ := strconv.Atoi(fAlbumonlyyear[2])
+		if fAlbumintlow <= fAlbumintonlyyear && fAlbumintonlyyear <= fAlbuminthigh {
+			if cDatesintlow <= artistData[k].CreationDate && artistData[k].CreationDate <= cDatesinthigh {
 				oneartistData = append(oneartistData, artistData[k])
 			}
 		}
