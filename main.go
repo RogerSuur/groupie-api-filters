@@ -15,7 +15,6 @@ import (
 func main() {
 	http.Handle("/css/", http.StripPrefix("/css/", http.FileServer(http.Dir("./assets")))) //	http.HandleFunc("/concerts", concerts) // handler for result site
 	http.HandleFunc("/", handler)
-	http.HandleFunc("/members", membersfunc)
 	http.HandleFunc("/filter", filterfunc) // handler for main page on site
 	http.HandleFunc("/query", query)       // handler for query results
 	http.HandleFunc("/search", search)     // handler for search bar
@@ -66,44 +65,43 @@ func filterfunc(w http.ResponseWriter, r *http.Request) {
 	fAlbumintlow, _ := strconv.Atoi(fAlbum[0])
 	fAlbuminthigh, _ := strconv.Atoi(fAlbum[1])
 
+	members := r.Form["m1"]
+
+	locations := r.FormValue("locations")
+	fmt.Println(locations)
+
 	for k := range artistData {
 		fAlbumonlyyear := strings.Split(artistData[k].FirstAlbum, "-")
 		fAlbumintonlyyear, _ := strconv.Atoi(fAlbumonlyyear[2])
 		if fAlbumintlow <= fAlbumintonlyyear && fAlbumintonlyyear <= fAlbuminthigh {
 			if cDatesintlow <= artistData[k].CreationDate && artistData[k].CreationDate <= cDatesinthigh {
-				oneartistData = append(oneartistData, artistData[k])
-			}
-		}
-	}
-
-	err = templ.ExecuteTemplate(w, "query.html", oneartistData)
-	if err != nil {
-		http.Error(w, "500 Internal server error", http.StatusInternalServerError)
-		return
-	}
-}
-
-func membersfunc(w http.ResponseWriter, r *http.Request) {
-	templ, err := template.ParseFiles("assets/query.html") // function to show html template on page
-	if err != nil {
-		http.Error(w, "500 Internal Server ERROR", http.StatusInternalServerError)
-		return
-	}
-	r.ParseForm()
-	var oneartistData []allBands
-	// r.ParseForm()vajalik formvalue jaoks, käib formi läbi
-	members := r.Form["m1"]
-	if len(members) > 0 {
-		for i := range artistData {
-			for j := range members {
-				if strconv.Itoa(len(artistData[i].Members)) == members[j] {
-					oneartistData = append(oneartistData, artistData[i])
+				for j := range artistData[k].DatesLocations {
+					e := strings.Split(j, "-")
+					if e[0] == locations {
+						oneartistData = append(oneartistData, artistData[k])
+					}
+				}
+				if len(members) > 0 {
+					for j := range members {
+						if strconv.Itoa(len(artistData[k].Members)) == members[j] {
+							oneartistData = append(oneartistData, artistData[k])
+						}
+					}
+				} else {
+					oneartistData = append(oneartistData, artistData[k])
 				}
 			}
 		}
-		templ.ExecuteTemplate(w, "query.html", oneartistData)
+	}
+
+	if oneartistData == nil {
+		fmt.Fprintf(w, "Nothing found..")
 	} else {
-		templ.ExecuteTemplate(w, "search.html", finaldata)
+		err = templ.ExecuteTemplate(w, "query.html", oneartistData)
+	}
+	if err != nil {
+		http.Error(w, "500 Internal server error", http.StatusInternalServerError)
+		return
 	}
 }
 
@@ -217,9 +215,13 @@ func getData(w http.ResponseWriter, r *http.Request) {
 	res, err := http.Get("https://groupietrackers.herokuapp.com/api/artists") // takes artists data from API
 	if err != nil {
 		fmt.Print(err.Error())
-		os.Exit(1)
+		w.WriteHeader(500)
 	}
 	bandData, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		fmt.Print(err.Error())
+		w.WriteHeader(500)
+	}
 	if err = json.Unmarshal(bandData, &artistData); err != nil {
 		log.Printf("Body parse error, %v", err)
 		w.WriteHeader(500) // Return 500 Bad Request.
@@ -231,6 +233,10 @@ func getData(w http.ResponseWriter, r *http.Request) {
 		os.Exit(1)
 	}
 	responseData, err := ioutil.ReadAll(response.Body)
+	if err != nil {
+		fmt.Print(err.Error())
+		w.WriteHeader(500)
+	}
 	if err = json.Unmarshal(bandData, &artistData); err != nil {
 		log.Printf("Body parse error, %v", err)
 		w.WriteHeader(500) // Return 500 Bad Request.
@@ -246,20 +252,28 @@ func getData(w http.ResponseWriter, r *http.Request) {
 	}
 	tempmap := make(map[string][]int)
 	tempbool := make(map[string]bool)
+	filtermap := make(map[string][]string)
+	tempbool2 := make(map[string]bool)
 
 	for k := range concertData.Index {
 		for i := range concertData.Index[k].DatesLocations {
-			if tempbool[i] == false {
-
+			if !tempbool2[i] {
+				r := strings.Split(i, "-")
+				filtermap[r[1]] = append(filtermap[r[1]], r[0])
+				tempbool2[i] = true
+			}
+			if !tempbool[i] {
 				e := strings.Title(i)
 				tempmap[e] = append(tempmap[e], k)
-
 				tempbool[i] = true
 			}
 		}
 	}
+
 	finaldata.Map = tempmap
 	finaldata.ArtistData = artistData
+	finaldata.Fmap = filtermap
+	// fmt.Println(artistData[1].DatesLocations)
 }
 
 type allBands struct {
@@ -294,9 +308,9 @@ var (
 var UptDatesLocations map[string][]int
 
 type manybands struct {
-	CreationDateMap map[int][]int
-	Map             map[string][]int
-	ArtistData      []allBands
+	Map        map[string][]int
+	ArtistData []allBands
+	Fmap       map[string][]string
 }
 
 var finaldata manybands
