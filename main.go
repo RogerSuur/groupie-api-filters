@@ -53,7 +53,9 @@ func filterfunc(w http.ResponseWriter, r *http.Request) {
 	}
 	getData(w, r)
 	r.ParseForm()
-	var oneartistData []allBands
+	var oneArtistData []allBands
+	var tempArtistData []allBands
+	var tempArtistData2 []allBands
 
 	slidercDates := r.FormValue("cDatename")
 	var cDates []string = strings.Split(slidercDates, " - ")
@@ -68,36 +70,46 @@ func filterfunc(w http.ResponseWriter, r *http.Request) {
 	members := r.Form["m1"]
 
 	locations := r.FormValue("locations")
-	fmt.Println(locations)
 
 	for k := range artistData {
 		fAlbumonlyyear := strings.Split(artistData[k].FirstAlbum, "-")
 		fAlbumintonlyyear, _ := strconv.Atoi(fAlbumonlyyear[2])
 		if fAlbumintlow <= fAlbumintonlyyear && fAlbumintonlyyear <= fAlbuminthigh {
 			if cDatesintlow <= artistData[k].CreationDate && artistData[k].CreationDate <= cDatesinthigh {
-				for j := range artistData[k].DatesLocations {
-					e := strings.Split(j, "-")
-					if e[0] == locations {
-						oneartistData = append(oneartistData, artistData[k])
-					}
-				}
-				if len(members) > 0 {
-					for j := range members {
-						if strconv.Itoa(len(artistData[k].Members)) == members[j] {
-							oneartistData = append(oneartistData, artistData[k])
-						}
-					}
-				} else {
-					oneartistData = append(oneartistData, artistData[k])
-				}
+				tempArtistData = append(tempArtistData, artistData[k])
 			}
 		}
 	}
 
-	if oneartistData == nil {
+	if len(members) > 0 {
+		for k := range tempArtistData {
+			for j := range members {
+				if strconv.Itoa(len(tempArtistData[k].Members)) == members[j] {
+					tempArtistData2 = append(tempArtistData2, tempArtistData[k])
+				}
+			}
+		}
+	} else {
+		tempArtistData2 = tempArtistData
+	}
+
+	if locations != "" {
+		for k := range tempArtistData2 {
+			for j := range tempArtistData2[k].DatesLocations {
+				e := strings.Split(j, "-")
+				if e[0] == locations {
+					oneArtistData = append(oneArtistData, tempArtistData2[k])
+				}
+			}
+		}
+	} else {
+		oneArtistData = tempArtistData2
+	}
+
+	if oneArtistData == nil {
 		fmt.Fprintf(w, "Nothing found..")
 	} else {
-		err = templ.ExecuteTemplate(w, "query.html", oneartistData)
+		err = templ.ExecuteTemplate(w, "query.html", oneArtistData)
 	}
 	if err != nil {
 		http.Error(w, "500 Internal server error", http.StatusInternalServerError)
