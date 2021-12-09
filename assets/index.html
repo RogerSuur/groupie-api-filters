@@ -88,7 +88,8 @@
   
   <label for="locations">Choose location:</label>
   <select name="locations" id="locations">
-    </optgroup>
+        <option value= ""></option>
+    
     {{range $k, $v := .Fmap}}
     <optgroup label="{{$k}}">
         {{range $v}}
