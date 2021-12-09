@@ -42,7 +42,7 @@ func handler(w http.ResponseWriter, r *http.Request) { // creates main site usin
 }
 
 func filterfunc(w http.ResponseWriter, r *http.Request) {
-	templ, err := template.ParseFiles("assets/query.html") // function to show html template on page
+	templ, err := template.ParseFiles("assets/index.html") // function to show html template on page
 	if err != nil {
 		http.Error(w, "500 Internal Server ERROR", http.StatusInternalServerError)
 		return
@@ -109,9 +109,11 @@ func filterfunc(w http.ResponseWriter, r *http.Request) {
 	if oneArtistData == nil {
 		fmt.Fprintf(w, "Nothing found..")
 	} else {
-		err = templ.ExecuteTemplate(w, "query.html", oneArtistData)
+		filterData.ArtistData = oneArtistData
+		err = templ.ExecuteTemplate(w, "index.html", filterData)
 	}
 	if err != nil {
+		log.Println(err)
 		http.Error(w, "500 Internal server error", http.StatusInternalServerError)
 		return
 	}
@@ -285,6 +287,7 @@ func getData(w http.ResponseWriter, r *http.Request) {
 	finaldata.Map = tempmap
 	finaldata.ArtistData = artistData
 	finaldata.Fmap = filtermap
+	filterData.Fmap = filtermap
 	// fmt.Println(artistData[1].DatesLocations)
 }
 
@@ -325,4 +328,10 @@ type manybands struct {
 	Fmap       map[string][]string
 }
 
+type filterStruct struct {
+	ArtistData []allBands
+	Fmap       map[string][]string
+}
+
 var finaldata manybands
+var filterData filterStruct
