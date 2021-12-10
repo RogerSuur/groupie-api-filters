@@ -15,9 +15,8 @@ import (
 func main() {
 	http.Handle("/css/", http.StripPrefix("/css/", http.FileServer(http.Dir("./assets")))) //	http.HandleFunc("/concerts", concerts) // handler for result site
 	http.HandleFunc("/", handler)
-	http.HandleFunc("/filter", filterfunc) // handler for main page on site
-	http.HandleFunc("/query", query)       // handler for query results
-	http.HandleFunc("/search", search)     // handler for search bar
+	http.HandleFunc("/query", query)   // handler for query results
+	http.HandleFunc("/search", search) // handler for search bar
 	fmt.Println("Starting server at localhost:8000")
 	http.ListenAndServe(":8000", nil) // start web server on port 8000
 }
@@ -28,25 +27,24 @@ func handler(w http.ResponseWriter, r *http.Request) { // creates main site usin
 		http.Error(w, "500 Internal Server ERROR", http.StatusInternalServerError)
 		return
 	}
-	if r.URL.Path != "/" {
+	if r.URL.Path != "/" && r.URL.Path != "/filter" {
 		http.Error(w, "404 address NOT FOUND", http.StatusNotFound)
 		return
 	}
-	getData(w, r)
-
-	err = templ.ExecuteTemplate(w, "index.html", finaldata)
-	if err != nil {
-		http.Error(w, "500 Internal server error", http.StatusInternalServerError)
-		return
+	switch r.Method {
+	case "GET":
+		getData(w, r)
+		err = templ.Execute(w, finaldata)
+		if err != nil {
+			http.Error(w, "500 Internal server error", http.StatusInternalServerError)
+			return
+		}
+	case "POST":
+		filterfunc(w, r, templ)
 	}
 }
 
-func filterfunc(w http.ResponseWriter, r *http.Request) {
-	templ, err := template.ParseFiles("assets/index.html") // function to show html template on page
-	if err != nil {
-		http.Error(w, "500 Internal Server ERROR", http.StatusInternalServerError)
-		return
-	}
+func filterfunc(w http.ResponseWriter, r *http.Request, templ *template.Template) {
 	if r.URL.Path != "/filter" {
 		http.Error(w, "404 address NOT FOUND", http.StatusNotFound)
 		return
@@ -110,12 +108,12 @@ func filterfunc(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, "Nothing found..")
 	} else {
 		filterData.ArtistData = oneArtistData
-		err = templ.ExecuteTemplate(w, "index.html", filterData)
-	}
-	if err != nil {
-		log.Println(err)
-		http.Error(w, "500 Internal server error", http.StatusInternalServerError)
-		return
+		err := templ.Execute(w, filterData)
+		if err != nil {
+			log.Println(err)
+			http.Error(w, "500 Internal server error", http.StatusInternalServerError)
+			return
+		}
 	}
 }
 
